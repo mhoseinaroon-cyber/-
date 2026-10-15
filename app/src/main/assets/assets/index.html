@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ماموریت پرچم</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#82d5f5;font-family:sans-serif;touch-action:none}
+canvas{display:block;width:100vw;height:100vh}
+#menu{position:fixed;inset:0;background:#102039dd;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:5}
+h1{margin:0;color:#ffe56b}
+button{border:0;border-radius:12px;padding:13px 20px;font-size:18px;font-weight:bold;background:#32c66b;color:#102039}
+#controls{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
+.group{display:flex;gap:12px;pointer-events:auto}
+.ctrl{width:64px;height:60px;border-radius:16px;background:#102039bb;color:white;font-size:26px;touch-action:none}
+#hud{position:fixed;top:10px;left:10px;right:10px;color:white;font-weight:bold;text-shadow:1px 2px 3px #123;display:flex;justify-content:space-between;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="menu">
+<h1>🚩 مأموریت پرچم</h1>
+<p>از دشمن‌ها عبور کن و پرچم قرمز را سبز کن!</p>
+<button id="start">شروع بازی</button>
+</div>
+<div id="hud"><span>ماموریت پرچم</span><span id="status">مرحله ۱</span></div>
+<canvas id="game"></canvas>
+<div id="controls">
+<div class="group">
+<button class="ctrl" id="left">◀</button>
+<button class="ctrl" id="right">▶</button>
+</div>
+<div class="group">
+<button class="ctrl" id="jump">⬆</button>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const menu=document.getElementById('menu');
+const status=document.getElementById('status');
+let W=innerWidth,H=innerHeight,scale=1;
+function resize(){
+ W=innerWidth;H=innerHeight;
+ canvas.width=Math.floor(W*devicePixelRatio);
+ canvas.height=Math.floor(H*devicePixelRatio);
+ canvas.style.width=W+'px';canvas.style.height=H+'px';
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener('resize',resize);resize();
+const worldW=2200, groundY=H-85;
+let player, camera=0, won=false,started=false,frame=0;
+const keys={left:false,right:false};
+let platforms=[],enemies=[],flag={x:2080,green:false};
+function reset(){
+ player={x:55,y:groundY-48,w:30,h:48,vx:0,vy:0,onGround:false};
+ camera=0;won=false;frame=0;flag.green=false;
+ platforms=[
+ {x:0,y:groundY,w:470,h:100},
+ {x:530,y:groundY-45,w:160,h:20},
+ {x:730,y:groundY-95,w:160,h:20},
+ {x:930,y:groundY,w:380,h:100},
+ {x:1370,y:groundY-55,w:160,h:20},
+ {x:1570,y:groundY-100,w:160,h:20},
+ {x:1780,y:groundY,w:420,h:100}
+ ];
+ enemies=[
+ {x:300,y:groundY-28,min:220,max:420,v:1.4,w:28},
+ {x:1020,y:groundY-28,min:950,max:1250,v:1.8,w:28},
+ {x:1840,y:groundY-28,min:1800,max:1980,v:1.6,w:28}
+ ];
+}
+reset();
+function bind(id,key){
+ const el=document.getElementById(id);
+ const down=e=>{e.preventDefault();keys[key]=true};
+ const up=e=>{e.preventDefault();keys[key]=false};
+ el.addEventListener('pointerdown',down);
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,up));
+}
+bind('left','left');bind('right','right');
+const jump=document.getElementById('jump');
+function doJump(e){e.preventDefault();if(started&&player.onGround){player.vy=-12;player.onGround=false}}
+jump.addEventListener('pointerdown',doJump);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;
+ if(e.key==='ArrowRight'||e.key==='d')keys.right=true;
+ if((e.key===' '||e.key==='ArrowUp'||e.key==='w')&&player.onGround)doJump(e);
+});
+addEventListener('keyup',e=>{
+ if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;
+ if(e.key==='ArrowRight'||e.key==='d')keys.right=false;
+});
+document.getElementById('start').onclick=()=>{
+ reset();started=true;menu.style.display='none';
+};
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x-camera,y,w,h)}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ let sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,'#5bc2f0');sky.addColorStop(1,'#d5f5ff');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // distant hills
+ for(let i=0;i<8;i++){
+  let x=i*340-(camera*.22%340);
+  ctx.fillStyle=i%2?'#76b987':'#5d9d7b';
+  ctx.beginPath();ctx.moveTo(x,H-80);ctx.lineTo(x+150,H-210);ctx.lineTo(x+320,H-80);ctx.fill();
+ }
+ // ruined buildings
+ for(let i=0;i<10;i++){
+  let x=i*250-(camera*.5%250);
+  ctx.fillStyle='#778694';ctx.fillRect(x,H-190,90,110);
+  ctx.fillStyle='#47586b';
+  for(let r=0;r<3;r++)for(let c=0;c<2;c++)
+   ctx.fillRect(x+12+c*35,H-175+r*30,13,17);
+ }
+ // platforms and ground
+ platforms.forEach(p=>{
+  rect(p.x,p.y,p.w,p.h,'#4c555c');
+  rect(p.x,p.y,p.w,9,'#42a84e');
+  for(let x=p.x+8;x<p.x+p.w;x+=28){
+   rect(x,p.y+15,15,5,'#68737a');
+  }
+ });
+ // enemies
+ enemies.forEach(e=>{
+  rect(e.x,e.y,e.w,28,'#b32f35');
+  rect(e.x+5,e.y+6,6,6,'#fff');
+  rect(e.x+17,e.y+6,6,6,'#fff');
+  rect(e.x+7,e.y+22,5,7,'#20252b');
+  rect(e.x+19,e.y+22,5,7,'#20252b');
+ });
+ // flag pole
+ rect(flag.x,groundY-115,7,115,'#f5f5f5');
+ ctx.fillStyle=flag.green?'#25d366':'#f23d3d';
+ ctx.beginPath();ctx.moveTo(flag.x+7-camera,groundY-112);
+ ctx.lineTo(flag.x+75-camera,groundY-94);
+ ctx.lineTo(flag.x+7-camera,groundY-76);ctx.fill();
+ // player
+ rect(player.x,player.y,player.w,player.h,'#1e2b45');
+ rect(player.x+4,player.y+5,22,15,'#f3c7a1');
+ rect(player.x+3,player.y+1,24,8,'#151a24');
+ rect(player.x+5,player.y+23,20,13,'#1d78ce');
+ rect(player.x+3,player.y+36,9,12,'#24242b');
+ rect(player.x+19,player.y+36,9,12,'#24242b');
+ rect(player.x+9,player.y+10,3,4,'#20252b');
+ rect(player.x+20,player.y+10,3,4,'#20252b');
+ // HUD
+ status.textContent=won?'ماموریت موفق!':`مرحله ۱ | ${Math.max(0,Math.floor((player.x/worldW)*100))}%`;
+}
+function update(){
+ if(started&&!won){
+  frame++;
+  player.vx=(keys.right?4:0)-(keys.left?4:0);
+  player.x=Math.max(0,Math.min(worldW-player.w,player.x+player.vx));
+  player.vy+=0.58;
+  let oldY=player.y;
+  player.y+=player.vy;
+  player.onGround=false;
+  for(const p of platforms){
+   if(player.x+player.w>p.x&&player.x<p.x+p.w&&
+      oldY+player.h<=p.y&&player.y+player.h>=p.y&&player.vy>=0){
+     player.y=p.y-player.h;player.vy=0;player.onGround=true;
+   }
+  }
+  if(player.y>H+150){reset()}
+  enemies.forEach(e=>{
+   e.x+=e.v;
+   if(e.x<e.min||e.x>e.max)e.v*=-1;
+   if(player.x<e.x+e.w&&player.x+player.w>e.x&&
+      player.y<e.y+28&&player.y+player.h>e.y){
+    reset();
+   }
+  });
+  if(player.x+player.w>flag.x){
+   won=true;flag.green=true;
+  }
+  camera=Math.max(0,Math.min(worldW-W,player.x-W*.35));
+ }
+ draw();
+ requestAnimationFrame(update);
+}
+update();
+</script>
+</body>
+</html>
