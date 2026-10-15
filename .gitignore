@@ -1,0 +1,17 @@
+# Gradle / Android build output
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+Thumbs.db
+
+# Android signing material (never commit private keys)
+*.jks
+*.keystore
+keystore.properties
+
+# Editor / temporary files
+*.swp
+*.tmp

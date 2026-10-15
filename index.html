@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ماموریت پرچم</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;font-family:system-ui,Tahoma,sans-serif}
+button{font-family:inherit}
+#app{width:100%;height:100%;position:relative;overflow:hidden;color:#fff}
+.screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;overflow:hidden}
+.screen.active{display:flex}
+.menuBg{position:absolute;inset:0;background:linear-gradient(#182e48 0%,#39789b 48%,#5c6d5b 49%,#252b29 100%)}
+.menuBg:before{content:"";position:absolute;left:-5%;right:-5%;bottom:25%;height:32%;background:#344d42;clip-path:polygon(0 80%,13% 20%,28% 60%,45% 8%,61% 62%,78% 25%,100% 65%,100% 100%,0 100%)}
+.panel{position:relative;width:min(520px,92%);padding:26px;border:2px solid #ffffff35;border-radius:24px;background:#101b25e8;box-shadow:0 16px 50px #0008;text-align:center}
+.title{font-size:42px;font-weight:1000;letter-spacing:-2px;margin:0 0 4px}
+.sub{opacity:.78;margin-bottom:20px}
+.menuBtn{width:100%;min-height:52px;margin:7px 0;border:0;border-radius:15px;background:#3d9b62;color:#fff;font-size:19px;font-weight:900}
+.menuBtn.alt{background:#46586a}
+.stageGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.stageBtn{min-height:105px;border:1px solid #ffffff25;border-radius:16px;background:#263747;color:white;font-weight:900}
+.stageBtn small{display:block;opacity:.65;margin-top:6px}
+.stageBtn.locked{opacity:.4}
+#gameScreen{background:#78bfe5}
+#viewport{position:absolute;inset:0;overflow:hidden;touch-action:none}
+#world{position:absolute;left:0;top:0;height:100%;width:3600px}
+.sky{position:absolute;inset:0;background:linear-gradient(#65b9e9 0%,#b8e4f1 64%,#8cb76d 64%,#7aa15d 100%)}
+.cloud{position:absolute;width:135px;height:35px;border-radius:30px;background:#eff9fbcc}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#eff9fb;border-radius:50%}
+.cloud:before{width:65px;height:65px;left:20px;top:-30px}.cloud:after{width:55px;height:55px;right:15px;top:-23px}
+.hill{position:absolute;bottom:150px;width:330px;height:180px;background:#5e9164;border-radius:55% 55% 0 0;box-shadow:inset 45px -20px #527f5a}
+.ruin{position:absolute;bottom:150px;width:150px;height:115px;background:#6b655b;border:7px solid #49463f;clip-path:polygon(0 100%,0 15%,22% 0,38% 14%,56% 2%,74% 17%,100% 0,100% 100%)}
+.ground{position:absolute;left:0;bottom:0;width:100%;height:150px;background:repeating-linear-gradient(0deg,#a66d3c 0 22px,#bd8450 22px 44px);border-top:12px solid #49a94f}
+.ground:before{content:"";position:absolute;top:-12px;left:0;right:0;height:14px;background:repeating-linear-gradient(90deg,#43a44c 0 25px,#62bd57 25px 46px)}
+.platform{position:absolute;background:#a66b38;border:4px solid #6f421f;border-radius:5px;box-shadow:inset 0 0 0 3px #d08b47}
+.qblock{background:#e0aa22!important;border-color:#9a6c12!important;color:#fff;font-weight:1000;font-size:28px;text-align:center;line-height:38px}
+.coin{position:absolute;width:24px;height:24px;border-radius:50%;background:#ffd84b;border:3px solid #a97512;box-shadow:0 0 10px #fff2a0;z-index:5}
+.enemy{position:absolute;width:38px;height:34px;background:#6b513e;border:3px solid #3f3026;border-radius:50% 50% 35% 35%;z-index:6}
+.enemy:before{content:"•  •";position:absolute;left:6px;top:-3px;color:#161616;font-weight:1000;white-space:pre}
+.player{position:absolute;width:36px;height:51px;background:linear-gradient(135deg,#2e78b4,#163d6b);border:3px solid #102b45;border-radius:10px;z-index:10;box-shadow:0 3px 0 #0d2132}
+.player:before{content:"";position:absolute;width:24px;height:22px;left:3px;top:-26px;background:#e1b28c;border:3px solid #102b45;border-radius:50%}
+.player:after{content:"";position:absolute;width:28px;height:8px;left:1px;top:-29px;background:#cf3939;border-radius:8px 12px 2px 2px}
+.checkpoint{position:absolute;bottom:150px;width:8px;height:160px;background:#4a4d48;z-index:4}
+.checkflag{position:absolute;left:8px;top:7px;width:72px;height:44px;background:#efc13a;clip-path:polygon(0 0,100% 0,78% 50%,100% 100%,0 100%)}
+.pole{position:absolute;bottom:150px;left:3420px;width:10px;height:285px;background:#484b45;z-index:8}
+.flag{position:absolute;left:10px;top:8px;width:115px;height:68px;clip-path:polygon(0 0,100% 0,80% 50%,100% 100%,0 100%);transition:transform .9s}
+.red{background:#bd343c}.green{background:#43a95c;transform:scaleY(0);transform-origin:top}
+#hud{position:absolute;left:10px;right:10px;top:8px;display:flex;justify-content:space-between;z-index:30;pointer-events:none}
+.badge{background:#ffffffd6;color:#18262d;border-radius:13px;padding:7px 10px;font-weight:1000;margin:2px}
+#toast{position:absolute;top:55px;left:50%;transform:translateX(-50%);background:#ffffffdf;color:#14222a;padding:7px 13px;border-radius:14px;font-weight:900;z-index:30;white-space:nowrap}
+#touch{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:center;gap:10px;z-index:40;direction:ltr}
+.touchBtn{width:62px;height:52px;border:0;border-radius:14px;background:#101820b8;color:#fff;font-size:24px;font-weight:1000}
+#pauseBtn{font-size:17px}
+#pause{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#081018b8;z-index:50}
+#pause.show{display:flex}
+.pausePanel{width:min(420px,90%);padding:24px;background:#152331f5;border-radius:22px;text-align:center}
+.info{text-align:right;line-height:1.9;color:#dce8ed}
+@media(max-width:520px){.title{font-size:33px}.panel{padding:19px}.stageBtn{min-height:90px;font-size:14px}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section id="menu" class="screen active">
+  <div class="menuBg"></div>
+  <div class="panel">
+    <div class="title">🚩 ماموریت پرچم</div>
+    <div class="sub">سرزمین ویران‌شده، سه منطقه و یک پرچم قرمز</div>
+    <button class="menuBtn" id="startBtn">شروع بازی</button>
+    <button class="menuBtn alt" id="levelsBtn">انتخاب منطقه</button>
+    <button class="menuBtn alt" id="helpBtn">راهنما</button>
+  </div>
+</section>
+
+<section id="levels" class="screen">
+  <div class="menuBg"></div>
+  <div class="panel">
+    <div class="title" style="font-size:31px">🗺️ انتخاب منطقه</div>
+    <div class="stageGrid">
+      <button class="stageBtn" data-level="0">۱<br>دشت ویران<small>آموزشی</small></button>
+      <button class="stageBtn" data-level="1">۲<br>خرابه‌ها<small>دشمن بیشتر</small></button>
+      <button class="stageBtn" data-level="2">۳<br>قلعه مرزی<small>مسیر سخت</small></button>
+    </div>
+    <button class="menuBtn alt" id="backMenu">بازگشت</button>
+  </div>
+</section>
+
+<section id="help" class="screen">
+  <div class="menuBg"></div>
+  <div class="panel">
+    <div class="title" style="font-size:31px">📖 راهنما</div>
+    <div class="info">
+      ◀ ▶ حرکت کن و ⬆️ بپر.<br>
+      روی بلاک‌ها می‌توانی بایستی و از آن‌ها بالا بروی.<br>
+      دشمن‌ها متحرک‌اند، پس مراقب باش.<br>
+      🟨 پرچم‌های زرد چک‌پوینت هستند.<br>
+      🪙 سکه‌ها را جمع کن.<br>
+      🚩 در پایان پرچم قرمز را پایین بیاور و 🟩 پرچم سبز را بالا ببر.
+    </div>
+    <button class="menuBtn alt" id="backHelp">بازگشت</button>
+  </div>
+</section>
+
+<section id="gameScreen" class="screen">
+ <div id="viewport"><div id="world">
+  <div class="sky"></div>
+  <div class="cloud" style="left:170px;top:70px"></div><div class="cloud" style="left:700px;top:110px"></div><div class="cloud" style="left:1450px;top:65px"></div><div class="cloud" style="left:2250px;top:100px"></div><div class="cloud" style="left:3000px;top:65px"></div>
+  <div class="hill" style="left:60px"></div><div class="hill" style="left:800px;transform:scale(.75)"></div><div class="hill" style="left:1450px;transform:scale(1.15)"></div><div class="hill" style="left:2500px;transform:scale(.8)"></div>
+  <div class="ruin" style="left:1120px"></div><div class="ruin" style="left:2460px;transform:scale(.8)"></div><div class="ruin" style="left:2920px"></div>
+
+  <!-- solid platforms -->
+  <div class="platform" style="left:330px;bottom:150px;width:55px;height:44px"></div>
+  <div class="platform qblock" style="left:385px;bottom:235px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:440px;bottom:235px;width:55px;height:44px"></div>
+  <div class="platform qblock" style="left:495px;bottom:235px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:730px;bottom:150px;width:80px;height:44px"></div>
+  <div class="platform qblock" style="left:810px;bottom:220px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:865px;bottom:220px;width:110px;height:44px"></div>
+  <div class="platform" style="left:1260px;bottom:150px;width:55px;height:44px"></div>
+  <div class="platform" style="left:1315px;bottom:205px;width:55px;height:44px"></div>
+  <div class="platform qblock" style="left:1370px;bottom:260px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:1680px;bottom:150px;width:120px;height:44px"></div>
+  <div class="platform qblock" style="left:1800px;bottom:225px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:1855px;bottom:225px;width:100px;height:44px"></div>
+  <div class="platform" style="left:2150px;bottom:150px;width:60px;height:44px"></div>
+  <div class="platform" style="left:2210px;bottom:205px;width:60px;height:44px"></div>
+  <div class="platform qblock" style="left:2270px;bottom:260px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:2650px;bottom:150px;width:150px;height:44px"></div>
+  <div class="platform qblock" style="left:2800px;bottom:225px;width:55px;height:44px">?</div>
+  <div class="platform" style="left:2855px;bottom:225px;width:110px;height:44px"></div>
+  <div class="platform" style="left:3150px;bottom:150px;width:90px;height:44px"></div>
+
+  <!-- coins -->
+  <div class="coin" style="left:395px;bottom:305px"></div><div class="coin" style="left:450px;bottom:305px"></div><div class="coin" style="left:505px;bottom:305px"></div>
+  <div class="coin" style="left:825px;bottom:290px"></div><div class="coin" style="left:880px;bottom:290px"></div>
+  <div class="coin" style="left:1375px;bottom:330px"></div><div class="coin" style="left:1805px;bottom:295px"></div>
+  <div class="coin" style="left:2275px;bottom:330px"></div><div class="coin" style="left:2805px;bottom:295px"></div>
+
+  <!-- moving enemies -->
+  <div class="enemy" data-ex="1" style="left:600px;bottom:150px"></div>
+  <div class="enemy" data-ex="2" style="left:1040px;bottom:150px"></div>
+  <div class="enemy" data-ex="3" style="left:1510px;bottom:150px"></div>
+  <div class="enemy" data-ex="4" style="left:1980px;bottom:150px"></div>
+  <div class="enemy" data-ex="5" style="left:2380px;bottom:150px"></div>
+  <div class="enemy" data-ex="6" style="left:3050px;bottom:150px"></div>
+
+  <div class="checkpoint" style="left:680px"><div class="checkflag"></div></div>
+  <div class="checkpoint" style="left:1650px"><div class="checkflag"></div></div>
+  <div class="checkpoint" style="left:2550px"><div class="checkflag"></div></div>
+  <div class="pole"><div class="flag red" id="red"></div><div class="flag green" id="green"></div></div>
+  <div class="player" id="player"></div>
+  <div class="ground"></div>
+ </div></div>
+
+ <div id="hud">
+   <div><span class="badge">🪙 <b id="coinCount">0</b></span><span class="badge">❤️ <b id="lives">3</b></span></div>
+   <div><span class="badge" id="levelName">منطقه ۱</span><span class="badge" id="cpName">شروع</span></div>
+ </div>
+ <div id="toast">به اولین چک‌پوینت زرد برس!</div>
+ <div id="touch"><button class="touchBtn" id="left">◀</button><button class="touchBtn" id="jump">⬆️</button><button class="touchBtn" id="right">▶</button><button class="touchBtn" id="pauseBtn">Ⅱ</button></div>
+ <div id="pause"><div class="pausePanel"><h2>⏸ بازی متوقف شد</h2><button class="menuBtn" id="resume">ادامه</button><button class="menuBtn alt" id="quit">خروج به منو</button></div></div>
+</section>
+</div>
+
+<script>
+(()=> {
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const screens={menu:$('#menu'),levels:$('#levels'),help:$('#help'),game:$('#gameScreen')};
+let selectedLevel=0, running=false, paused=false, raf=0;
+let x=45,y=0,vx=0,vy=0,onGround=true,lives=3,coins=0,checkpoint=45,cpIndex=0,won=false;
+let keys={left:false,right:false};
+const world=$('#world'), player=$('#player'), viewport=$('#viewport');
+
+function show(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active')}
+function toast(t){$('#toast').textContent=t}
+function resetEntities(){
+  $$('.coin').forEach(c=>{c.dataset.taken='0';c.style.opacity='1'});
+  $$('.enemy').forEach((e,i)=>{e.dataset.dir=(i%2?'1':'-1')});
+}
+function startGame(level=0){
+  selectedLevel=level; x=45;y=0;vx=0;vy=0;onGround=true;lives=3;coins=0;checkpoint=45;cpIndex=0;won=false;paused=false;
+  $('#coinCount').textContent='0';$('#lives').textContent='3';$('#levelName').textContent='منطقه '+(level+1);$('#cpName').textContent='شروع';
+  $('#red').style.transform='';$('#green').style.transform='scaleY(0)';resetEntities();show('game');running=true;toast('به اولین چک‌پوینت زرد برس!');
+  cancelAnimationFrame(raf); loop();
+}
+function jump(){if(running&&!paused&&!won&&onGround){vy=11;onGround=false}}
+function hold(btn,key){
+ btn.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});
+ ['pointerup','pointercancel','pointerleave'].forEach(t=>btn.addEventListener(t,()=>keys[key]=false));
+}
+hold($('#left'),'left');hold($('#right'),'right');
+$('#jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+$('#pauseBtn').onclick=()=>{paused=true;$('#pause').classList.add('show')};
+$('#resume').onclick=()=>{paused=false;$('#pause').classList.remove('show')};
+$('#quit').onclick=()=>{running=false;$('#pause').classList.remove('show');show('menu')};
+$('#startBtn').onclick=()=>startGame(0);
+$('#levelsBtn').onclick=()=>show('levels');
+$('#helpBtn').onclick=()=>show('help');
+$('#backMenu').onclick=()=>show('menu');$('#backHelp').onclick=()=>show('menu');
+$$('.stageBtn').forEach(b=>b.onclick=()=>startGame(+b.dataset.level));
+window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')keys.left=true;if(e.key==='ArrowRight')keys.right=true;if(e.key==='ArrowUp'||e.key===' ')jump()});
+window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys.left=false;if(e.key==='ArrowRight')keys.right=false});
+
+function rect(el){
+ const left=parseFloat(el.style.left)||0,bottom=parseFloat(el.style.bottom)||0;
+ const width=el.offsetWidth,height=el.offsetHeight;
+ return {l:left,r:left+width,b:bottom,t:bottom+height};
+}
+function playerRect(){return {l:x,r:x+36,b:125+y,t:176+y}}
+function overlap(a,b){return a.l<b.r&&a.r>b.l&&a.b<b.t&&a.t>b.b}
+function solidPlatforms(){
+ return $$('.platform').map(el=>({el,...rect(el)}));
+}
+function physics(){
+ if(keys.left)vx-=.48;if(keys.right)vx+=.48;vx*=.86;vx=Math.max(-5,Math.min(5,vx));
+ vy-=.58;
+ const oldY=y;y+=vy;
+ let pr=playerRect(), landing=null;
+ if(vy<=0){
+   for(const s of solidPlatforms()){
+     const horizontal=pr.r>s.l&&pr.l<s.r;
+     const oldBottom=125+oldY, newBottom=125+y;
+     if(horizontal && oldBottom>=s.t-2 && newBottom<=s.t+2){landing=s;break}
+   }
+ }
+ if(landing){y=landing.t-125;vy=0;onGround=true}else if(y<=0){y=0;vy=0;onGround=true}else onGround=false;
+ x+=vx;if(x<5)x=5;if(x>3520)x=3520;
+}
+function updateCoins(){
+ const pr=playerRect();
+ $$('.coin').forEach(c=>{
+  if(c.dataset.taken==='1')return;
+  const rr=rect(c);
+  if(overlap(pr,rr)){c.dataset.taken='1';c.style.opacity='.15';coins++;$('#coinCount').textContent=coins}
+ });
+}
+function updateEnemies(){
+ $$('.enemy').forEach((e,i)=>{
+   let ex=parseFloat(e.style.left)||0;
+   let dir=e.dataset.dir==='1'?1:-1;
+   const speed=.7+(i%3)*.15;
+   const min=ex-(95+i*7), max=ex+(95+i*7);
+   ex+=dir*speed;
+   if(ex>max){ex=max;e.dataset.dir='-1'} if(ex<min){ex=min;e.dataset.dir='1'}
+   e.style.left=ex+'px';
+   const er=rect(e),pr=playerRect();
+   if(overlap(pr,er)&&!won){
+     if(vy<0&&pr.b>=er.t-8){vy=8;e.style.opacity='.35'}else{
+       lives--;$('#lives').textContent=lives;
+       if(lives<=0){toast('جان‌ها تمام شد! از چک‌پوینت برمی‌گردی.');lives=3;$('#lives').textContent='3'}
+       x=checkpoint;y=0;vx=0;vy=0;
+     }
+   }
+ });
+}
+function checkpoints(){
+ const cps=[680,1650,2550];
+ for(let i=cpIndex;i<cps.length;i++){
+   if(x>cps[i]-20){cpIndex=i+1;checkpoint=cps[i]-20;$('#cpName').textContent='چک‌پوینت '+cpIndex;toast('چک‌پوینت ذخیره شد! 🔥');break}
+ }
+}
+function camera(){
+ const cam=Math.max(0,Math.min(3600,x-190));
+ world.style.transform=`translateX(${-cam}px)`;
+}
+function win(){
+ if(x>3380&&!won){won=true;$('#red').style.transform='translateY(215px)';$('#green').style.transform='scaleY(1)';toast('🎉 مأموریت کامل شد! پرچم سبز بالا رفت!');}
+}
+function loop(){
+ if(!running)return;
+ if(!paused){
+   physics();updateCoins();updateEnemies();checkpoints();win();camera();
+ }
+ raf=requestAnimationFrame(loop);
+}
+})();
+</script>
+</body>
+</html>
