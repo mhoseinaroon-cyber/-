@@ -1,566 +1,104 @@
 
-<!DOCTYPE html>
-<html lang="fa">
+<!doctype html>
+<html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ماموریت پرچم</title>
-
-<!-- 1. ظاهر صفحه -->
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden}
-body{font-family:Tahoma,Arial,sans-serif;background:#17202b;color:white;touch-action:none;user-select:none}
-button{font:inherit;cursor:pointer;touch-action:manipulation}
-#game{display:block;width:100%;height:100%;background:#76c9ed}
-#hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-.pill{background:#142338df;border:1px solid #ffffff55;border-radius:12px;padding:8px 11px;font-size:13px}
-#menu,#message{position:absolute;inset:0;background:#101c2beF;display:flex;align-items:center;justify-content:center;padding:18px;z-index:10}
-.panel{width:min(440px,100%);padding:22px;border-radius:20px;background:#23364c;border:2px solid #ffffff35;text-align:center;box-shadow:0 12px 40px #0006}
-h1{margin:0 0 12px;color:#ffe46b;font-size:clamp(25px,6vw,38px)}
-p{line-height:1.8;color:#e3edf7}
-.primary{border:0;border-radius:13px;padding:14px 22px;background:#37d477;color:#102033;font-weight:bold;font-size:19px;min-width:180px}
-.secondary{border:1px solid #ffffff55;border-radius:12px;padding:10px 15px;background:#40566e;color:white;margin:5px}
-#message{display:none}
-#controls{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+*{box-sizing:border-box;touch-action:manipulation}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#102039;color:#eef6ff;font-family:Tahoma,Arial,sans-serif}
+#game{position:relative;width:100%;height:100%;overflow:hidden;background:#91c9e8}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;z-index:2;pointer-events:none}
+.pill{background:#102039dd;border:1px solid #ffffff35;border-radius:12px;padding:8px;font-size:12px;font-weight:bold}
+#controls{position:absolute;left:0;right:0;bottom:max(12px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end;padding:0 14px;z-index:5;pointer-events:none}
 .pad{display:flex;gap:10px;pointer-events:auto}
-.control{width:66px;height:60px;border-radius:16px;border:1px solid #ffffff65;background:#15253bdc;color:white;font-size:27px;font-weight:bold}
-#jump{
-  width:76px;
-  height:70px;
-  background:#2378c5e8;
-  pointer-events:auto;
-  position:relative;
-  z-index:2;
-}
-.small{font-size:12px;color:#d0dceb}
+.control{width:66px;height:64px;border:2px solid #ffffffaa;border-radius:18px;background:#102039e8;color:white;font-size:25px;font-weight:bold;user-select:none;-webkit-user-select:none;touch-action:none;pointer-events:auto}
+#jump{width:80px;height:72px;background:#2378c5ed;font-size:17px;position:relative;z-index:6;pointer-events:auto}
+#overlay{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px;background:#071323a8}
+.card{width:min(440px,100%);background:#12243af5;border:1px solid #ffffff35;border-radius:22px;padding:24px 18px;text-align:center}
+h1{margin:0 0 10px;font-size:26px}
+#message{line-height:1.9;font-size:14px;color:#d8e8f8;margin:12px 0 18px}
+.action{border:0;border-radius:13px;background:#32d477;color:#082719;font-size:17px;font-weight:bold;padding:13px 22px;min-width:160px}
+.secondary{display:block;margin:12px auto 0;background:#ffffff14;border:1px solid #ffffff38;color:white}
+.small{font-size:12px;color:#b9cee2;margin-top:14px;line-height:1.7}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-
-<!-- 2. صفحه بازی -->
-<canvas id="game"></canvas>
-
-<!-- 3. اطلاعات بالای صفحه -->
+<div id="game">
+<canvas id="screen"></canvas>
 <div id="hud">
-  <div class="pill" id="levelText">مرحله ۱</div>
-  <div class="pill" id="missionText">به پرچم قرمز برس!</div>
-  <div class="pill" id="lifeText">❤️ 3</div>
+<div class="pill" id="levelText">مرحله ۱</div>
+<div class="pill" id="statusText">پرچم قرمز را پایین بیاور!</div>
+<div class="pill" id="lifeText">❤️ ۳</div>
 </div>
-
-<!-- 4. منوی شروع -->
-<div id="menu">
-  <div class="panel">
-    <h1>🚩 ماموریت پرچم</h1>
-    <p>از موانع عبور کن، از دشمن‌ها دوری کن و پرچم قرمز را سبز کن!</p>
-    <button class="primary" id="startButton" type="button">شروع بازی</button>
-    <p class="small">حرکت: دکمه‌های چپ و راست | پرش: دکمهٔ آبی</p>
-  </div>
-</div>
-
-<!-- 5. دکمه‌های لمسی -->
 <div id="controls">
-  <div class="pad">
-    <button class="control" id="leftButton" type="button" aria-label="چپ">◀</button>
-    <button class="control" id="rightButton" type="button" aria-label="راست">▶</button>
-  </div>
-  <button class="control" id="jump" type="button" aria-label="پرش">⬆</button>
+<div class="pad">
+<button class="control" id="left">◀</button>
+<button class="control" id="right">▶</button>
 </div>
-
-<!-- 6. پنجره پایان مرحله -->
-<div id="message">
-  <div class="panel">
-    <h1 id="messageTitle">آفرین!</h1>
-    <p id="messageBody">پرچم را سبز کردی!</p>
-    <button class="primary" id="nextButton" type="button">مرحله بعد</button>
-    <br>
-    <button class="secondary" id="restartButton" type="button">شروع دوباره</button>
-    <button class="secondary" id="menuButton" type="button">منوی اصلی</button>
-  </div>
+<button class="control" id="jump">پرش ⤴</button>
+</div>
+<div id="overlay">
+<div class="card">
+<h1 id="title">ماموریت پرچم</h1>
+<div id="message">از سکوها بگذر، از دشمن‌ها دوری کن، پرچم قرمز را پایین بیاور و پرچم سبز را بالا ببر!</div>
+<button class="action" id="start">شروع بازی</button>
+<button class="action secondary hidden" id="next">مرحله بعد</button>
+<div class="small">کنترل: چپ و راست برای حرکت، پرش برای پریدن.</div>
+</div>
+</div>
 </div>
 
 <script>
-"use strict";
-
-/* 7. گرفتن عناصر صفحه */
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const menu = document.getElementById("menu");
-const message = document.getElementById("message");
-const messageTitle = document.getElementById("messageTitle");
-const messageBody = document.getElementById("messageBody");
-const nextButton = document.getElementById("nextButton");
-const levelText = document.getElementById("levelText");
-const missionText = document.getElementById("missionText");
-const lifeText = document.getElementById("lifeText");
-
-/* 8. تنظیم اندازه صفحه */
-let W = innerWidth, H = innerHeight, DPR = 1;
-function resize(){
-  W = innerWidth;
-  H = innerHeight;
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.floor(W * DPR);
-  canvas.height = Math.floor(H * DPR);
-  canvas.style.width = W + "px";
-  canvas.style.height = H + "px";
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-addEventListener("resize",resize);
-resize();
-
-/* 9. وضعیت بازی */
-let running = false;
-let gameState = "menu";
-let levelIndex = 0;
-let lives = 3;
-let score = 0;
-let cameraX = 0;
-let tick = 0;
-let lastTime = 0;
-let jumpQueued = false;
-
-/* 10. کنترل‌ها */
-const keys = {left:false,right:false};
-function bindHold(id,key){
-  const el = document.getElementById(id);
-  const down = e => {
-    e.preventDefault();
-    keys[key] = true;
-    try { el.setPointerCapture(e.pointerId); } catch (_) {}
-  };
-  const up = e => {
-    e.preventDefault();
-    keys[key] = false;
-  };
-  el.addEventListener("pointerdown",down);
-  el.addEventListener("pointerup",up);
-  el.addEventListener("pointercancel",up);
-  el.addEventListener("lostpointercapture",up);
-}
-bindHold("leftButton","left");
-bindHold("rightButton","right");
-
-const jumpButton = document.getElementById("jump");
-
-function requestJump(e){
-  e.preventDefault();
-  if(gameState === "playing" && player && player.onGround){
-    jumpQueued = true;
-  }
-}
-
-jumpButton.addEventListener("pointerdown", requestJump);
-});
-
-/* 11. پشتیبانی از صفحه کلید */
-addEventListener("keydown",e=>{
-  if(["ArrowLeft","ArrowRight","ArrowUp"," ","a","d","w"].includes(e.key)) e.preventDefault();
-  if(e.key==="ArrowLeft"||e.key==="a") keys.left=true;
-  if(e.key==="ArrowRight"||e.key==="d") keys.right=true;
-  if(e.key==="ArrowUp"||e.key===" "||e.key==="w") jumpQueued=true;
-});
-addEventListener("keyup",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
-  if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
-});
-
-/* 12. تعریف مراحل */
-const levelData = [
-  {
-    name:"مرحله ۱: دشت ویران",
-    width:1900,
-    platforms:[
-      [0,0,430,70],[500,-45,145,18],[690,-95,145,18],
-      [870,0,330,70],[1240,-50,150,18],
-      [1440,0,460,70]
-    ],
-    enemies:[[240,0,170,1.2],[950,0,220,1.5],[1550,0,190,1.4]],
-    checkpoint:1050, flagX:1790
-  },
-  {
-    name:"مرحله ۲: پل‌های شکسته",
-    width:2200,
-    platforms:[
-      [0,0,270,70],[330,-60,130,18],[510,-115,130,18],
-      [700,-55,150,18],[900,0,240,70],[1190,-70,145,18],
-      [1390,-125,150,18],[1600,-55,160,18],[1810,0,390,70]
-    ],
-    enemies:[[90,0,150,1.6],[925,0,170,1.7],[1850,0,220,1.8]],
-    checkpoint:1160,flagX:2110
-  },
-  {
-    name:"مرحله ۳: آخرین سنگر",
-    width:2500,
-    platforms:[
-      [0,0,300,70],[350,-70,140,18],[550,-125,140,18],
-      [750,-65,150,18],[970,0,220,70],[1240,-70,145,18],
-      [1440,-130,145,18],[1640,-65,145,18],
-      [1850,0,210,70],[2110,-65,145,18],[2300,0,200,70]
-    ],
-    enemies:[[80,0,170,1.8],[1000,0,160,1.9],[1870,0,150,2],[2320,0,110,1.8]],
-    checkpoint:1510,flagX:2420
-  }
+(()=>{'use strict';
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const overlay=$('overlay'),titleEl=$('title'),messageEl=$('message'),startBtn=$('start'),nextBtn=$('next');
+let W=0,H=0,DPR=1,cameraX=0,lastTime=0,state='menu',levelIndex=0,lives=3,jumpQueued=false,checkpointX=70,invincible=0,elapsed=0,redLowered=false;
+const input={left:false,right:false},gravity=.62;
+const levels=[
+{length:2200,platforms:[[0,0,520,90],[600,0,260,90],[940,0,320,90],[1360,0,360,90],[1800,0,400,90],[300,130,130,18],[500,205,120,18],[760,145,140,18],[1030,220,130,18],[1240,150,130,18],[1510,220,130,18],[1720,145,120,18]],red:1920,green:2050,enemies:[[420,350,510,1.2],[1010,960,1210,1.5],[1560,1520,1680,1.35]]},
+{length:2600,platforms:[[0,0,400,90],[470,0,260,90],[810,0,260,90],[1170,0,300,90],[1550,0,250,90],[1900,0,300,90],[2280,0,320,90],[260,145,125,18],[550,215,130,18],[850,145,120,18],[1080,220,120,18],[1320,150,120,18],[1600,220,120,18],[1850,150,120,18],[2130,220,120,18]],red:2310,green:2440,enemies:[[520,480,700,1.7],[1240,1190,1440,1.6],[1970,1920,2160,1.8]]},
+{length:3000,platforms:[[0,0,430,90],[500,0,240,90],[820,0,300,90],[1200,0,280,90],[1560,0,280,90],[1920,0,300,90],[2300,0,250,90],[2630,0,370,90],[280,155,130,18],[560,220,120,18],[900,155,120,18],[1120,230,120,18],[1400,160,120,18],[1690,225,120,18],[2000,160,120,18],[2240,225,120,18],[2490,155,120,18]],red:2700,green:2830,enemies:[[560,510,700,1.8],[1290,1220,1450,1.9],[1980,1940,2200,1.7],[2400,2320,2500,2]]}
 ];
+const player={x:70,y:0,w:32,h:44,vx:0,vy:0,onGround:true,facing:1};
+let platforms=[],enemies=[],length=2200,redX=1920,greenX=2050;
+function groundY(){return H-68}
+function resize(){const r=canvas.getBoundingClientRect();DPR=Math.min(devicePixelRatio||1,2);W=Math.max(320,r.width);H=Math.max(240,r.height);canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',resize);resize();
+function buildLevel(){const L=levels[levelIndex];length=L.length;platforms=L.platforms.map(p=>({x:p[0],y:p[1],w:p[2],h:p[3]}));enemies=L.enemies.map(e=>({x:e[0],min:e[1],max:e[2],speed:e[3],w:32,h:28,dir:1,alive:true}));redX=L.red;greenX=L.green;player.x=70;player.y=groundY()-player.h;player.vx=player.vy=0;player.onGround=true;player.facing=1;cameraX=0;checkpointX=70;redLowered=false;invincible=1.3;$('levelText').textContent='مرحله '+(levelIndex+1);$('statusText').textContent='پرچم قرمز را پایین بیاور!';$('lifeText').textContent='❤️ '+lives}
+function show(title,msg,button='ادامه'){titleEl.textContent=title;messageEl.textContent=msg;startBtn.textContent=button;overlay.classList.remove('hidden')}
+function startGame(){levelIndex=0;lives=3;elapsed=0;buildLevel();state='playing';nextBtn.classList.add('hidden');startBtn.classList.remove('hidden');overlay.classList.add('hidden')}
+startBtn.addEventListener('click',()=>{if(state==='won')levelIndex=0;startGame()});
+nextBtn.addEventListener('click',()=>{if(state!=='leveldone')return;levelIndex++;if(levelIndex>=levels.length){state='won';nextBtn.classList.add('hidden');startBtn.classList.remove('hidden');show('پیروزی!','هر سه مرحله را کامل کردی و پرچم سبز را بالا بردی!','بازی دوباره');return}buildLevel();state='playing';overlay.classList.add('hidden');nextBtn.classList.add('hidden');startBtn.classList.remove('hidden')});
+function loseLife(){if(invincible>0)return;lives--;$('lifeText').textContent='❤️ '+lives;if(lives<=0){state='gameover';show('پایان بازی','دوباره تلاش کن و از دشمن‌ها دوری کن!','تلاش دوباره');return}player.x=checkpointX;player.y=groundY()-player.h;player.vx=player.vy=0;invincible=2}
+function bindHold(id,key){const el=$(id);const down=e=>{e.preventDefault();input[key]=true};const up=e=>{e.preventDefault();input[key]=false};el.addEventListener('pointerdown',down);['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,up));el.addEventListener('contextmenu',e=>e.preventDefault())}
+bindHold('left','left');bindHold('right','right');
+function requestJump(e){e.preventDefault();if(state==='playing')jumpQueued=true}
+$('jump').addEventListener('pointerdown',requestJump);
+$('jump').addEventListener('click',requestJump);
+$('jump').addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' ','ArrowUp','a','d','w'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'||e.key==='a')input.left=true;if(e.key==='ArrowRight'||e.key==='d')input.right=true;if(e.key===' '||e.key==='ArrowUp'||e.key==='w')jumpQueued=true});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')input.left=false;if(e.key==='ArrowRight'||e.key==='d')input.right=false});
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function update(dt){if(state!=='playing'){jumpQueued=false;return}elapsed+=dt;invincible=Math.max(0,invincible-dt);const scale=dt*60;player.vx=((input.right?1:0)-(input.left?1:0))*3.8;if(player.vx)player.facing=Math.sign(player.vx);if(jumpQueued&&player.onGround){player.vy=-12.5;player.onGround=false}jumpQueued=false;const oldY=player.y;player.x=Math.max(0,Math.min(length-player.w,player.x+player.vx*scale));player.vy+=gravity*scale;player.y+=player.vy*scale;player.onGround=false;const gy=groundY();if(player.y+player.h>=gy&&oldY+player.h<=gy+10&&player.vy>=0){player.y=gy-player.h;player.vy=0;player.onGround=true}
+for(const p of platforms){const py=gy-p.y;if(p.y>0&&player.x+player.w>p.x&&player.x<p.x+p.w&&player.vy>=0&&oldY+player.h<=py+8&&player.y+player.h>=py){player.y=py-player.h;player.vy=0;player.onGround=true}}
+for(const en of enemies){if(!en.alive)continue;en.x+=en.speed*en.dir*scale;if(en.x<en.min){en.x=en.min;en.dir=1}if(en.x+en.w>en.max){en.x=en.max-en.w;en.dir=-1}const er={x:en.x,y:gy-en.h,w:en.w,h:en.h};if(hit(player,er)){if(player.vy>1&&oldY+player.h<=er.y+12){en.alive=false;player.vy=-7}else loseLife()}}
+if(player.y>H+120)loseLife();if(player.x>redX&&!redLowered){redLowered=true;$('statusText').textContent='حالا به پرچم سبز برس!'}if(redLowered&&player.x>greenX){state='leveldone';$('statusText').textContent='مرحله کامل شد';nextBtn.classList.remove('hidden');startBtn.classList.add('hidden');show('مرحله کامل شد!','پرچم قرمز پایین آمد و پرچم سبز بالا رفت!','');nextBtn.textContent=levelIndex===levels.length-1?'پایان بازی':'مرحله بعد'}cameraX=Math.max(0,Math.min(length-W,player.x-W*.35))}
+</script>
 
-/* 13. اشیای بازی */
-let player;
-let platforms = [];
-let enemies = [];
-let checkpointX = 0;
-let flag = {x:0,green:false};
-let worldWidth = 1900;
-let groundY = H - 80;
-
-/* 14. بارگذاری مرحله */
-function loadLevel(index){
-  levelIndex = Math.max(0,Math.min(index,levelData.length-1));
-  const data = levelData[levelIndex];
-  groundY = H - 80;
-  worldWidth = data.width;
-  platforms = data.platforms.map(p=>({
-    x:p[0], y:groundY+p[1], w:p[2], h:p[3]
-  }));
-  enemies = data.enemies.map(e=>({
-    x:e[0], y:groundY-28, start:e[0], range:e[2],
-    speed:e[3], dir:1, w:28, h:28, alive:true
-  }));
-  checkpointX = data.checkpoint;
-  flag = {x:data.flagX,green:false};
-  player = {
-    x:35,y:groundY-48,w:30,h:48,
-    vx:0,vy:0,onGround:false,face:1
-  };
-  cameraX = 0;
-  levelText.textContent = data.name;
-  updateHUD();
-}
-
-/* 15. اطلاعات بازی */
-function updateHUD(){
-  lifeText.textContent = "❤️ " + lives;
-  if(flag.green) missionText.textContent = "پرچم سبز شد!";
-  else missionText.textContent = "به پرچم قرمز برس!";
-}
-
-/* 16. شروع واقعی بازی */
-function startGame(){
-  lives = 3;
-  score = 0;
-  loadLevel(0);
-  menu.style.display = "none";
-  message.style.display = "none";
-  gameState = "playing";
-  running = true;
-  lastTime = performance.now();
-  updateHUD();
-}
-document.getElementById("startButton").addEventListener("click",startGame);
-document.getElementById("startButton").addEventListener("touchend",e=>{
-  e.preventDefault();
-  if(gameState==="menu") startGame();
-},{passive:false});
-
-/* 17. رسم مستطیل */
-function box(x,y,w,h,color){
-  ctx.fillStyle=color;
-  ctx.fillRect(Math.round(x),Math.round(y),w,h);
-}
-
-/* 18. پس‌زمینه */
-function drawBackground(){
-  const sky = ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,"#65bce9");
-  sky.addColorStop(1,"#d7f0f8");
-  ctx.fillStyle=sky;
-  ctx.fillRect(0,0,W,H);
-
-  // ابرها
-  for(let i=0;i<6;i++){
-    const x=((i*220-cameraX*.12)%(W+260)+W+260)%(W+260)-100;
-    const y=45+(i%3)*45;
-    ctx.fillStyle="#ffffffaa";
-    ctx.beginPath();
-    ctx.arc(x,y,20,0,Math.PI*2);
-    ctx.arc(x+24,y-9,25,0,Math.PI*2);
-    ctx.arc(x+50,y,19,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  // تپه‌ها
-  for(let i=0;i<8;i++){
-    const x=i*250-cameraX*.22%250;
-    ctx.fillStyle=i%2?"#82b98d":"#679c7d";
-    ctx.beginPath();
-    ctx.moveTo(x,H-65);
-    ctx.lineTo(x+120,H-190-(i%3)*20);
-    ctx.lineTo(x+280,H-65);
-    ctx.fill();
-  }
-
-  // ساختمان‌های آسیب‌دیده
-  for(let i=0;i<9;i++){
-    const x=i*270-cameraX*.42%270;
-    const y=H-190-(i%2)*25;
-    box(x,y,90,130,"#75828b");
-    box(x+8,y+18,20,24,"#374655");
-    box(x+48,y+18,22,24,"#374655");
-    box(x+25,y+65,25,28,"#374655");
-    box(x+2,y+125,94,7,"#566570");
-  }
-}
-
-/* 19. رسم سکوها و زمین */
-function drawPlatforms(){
-  for(const p of platforms){
-    const x=p.x-cameraX;
-    if(x+p.w<-10||x>W+10) continue;
-    box(x,p.y,p.w,p.h,"#4e5a61");
-    box(x,p.y,p.w,9,"#39a74d");
-    for(let tx=x+8;tx<x+p.w;tx+=28){
-      box(tx,p.y+17,14,4,"#718087");
-    }
-    if(p.h>40){
-      for(let tx=x+15;tx<x+p.w;tx+=55){
-        box(tx,p.y+45,22,7,"#39464f");
-      }
-    }
-  }
-}
-
-/* 20. رسم دشمن‌ها */
-function drawEnemies(){
-  for(const e of enemies){
-    if(!e.alive) continue;
-    const x=e.x-cameraX;
-    box(x,e.y,e.w,e.h,"#bd3038");
-    box(x+4,e.y+6,7,7,"#fff");
-    box(x+17,e.y+6,7,7,"#fff");
-    box(x+6,e.y+8,3,4,"#20232a");
-    box(x+19,e.y+8,3,4,"#20232a");
-    box(x+6,e.y+22,7,6,"#252b34");
-    box(x+19,e.y+22,7,6,"#252b34");
-  }
-}
-
-/* 21. رسم پرچم */
-function drawFlag(){
-  const x=flag.x-cameraX;
-  box(x,groundY-118,7,118,"#f4f4f4");
-  ctx.fillStyle=flag.green?"#20d568":"#f13b40";
-  ctx.beginPath();
-  ctx.moveTo(x+7,groundY-114);
-  ctx.lineTo(x+78,groundY-94);
-  ctx.lineTo(x+7,groundY-75);
-  ctx.closePath();
-  ctx.fill();
-  box(x-9,groundY-2,26,5,"#313d48");
-}
-
-/* 22. رسم بازیکن */
-function drawPlayer(){
-  const x=player.x-cameraX, y=player.y;
-  // پاها
-  box(x+3,y+35,10,13,"#252a35");
-  box(x+18,y+35,10,13,"#252a35");
-  // بدن
-  box(x+4,y+20,22,17,"#2179ca");
-  // دست‌ها
-  box(x,y+22,5,15,"#e5b38e");
-  box(x+25,y+22,5,15,"#e5b38e");
-  // سر و کلاه
-  box(x+4,y+4,22,17,"#e5b38e");
-  box(x+2,y+1,26,8,"#202b3b");
-  // چشم‌ها
-  box(x+(player.face>0?20:7),y+10,4,4,"#20232a");
-  // نشان روی لباس
-  box(x+11,y+24,8,5,"#f5db59");
-}
-
-/* 23. برخورد مستطیلی */
-function overlaps(a,b){
-  return a.x+a.w>b.x && a.x<b.x+b.w &&
-         a.y+a.h>b.y && a.y<b.y+b.h;
-}
-
-/* 24. بازگشت پس از باخت */
-function loseLife(){
-  lives--;
-  updateHUD();
-  if(lives<=0){
-    gameState="lost";
-    showMessage("ماموریت ناموفق","جان‌ها تمام شد. دوباره تلاش کن.","تلاش دوباره");
-  }else{
-    player.x=Math.max(0,checkpointX-35);
-    player.y=groundY-48;
-    player.vx=0;
-    player.vy=0;
-    cameraX=Math.max(0,player.x-W*.35);
-  }
-}
-
-/* 25. پنجره پایان */
-function showMessage(title,body,nextLabel){
-  messageTitle.textContent=title;
-  messageBody.textContent=body;
-  nextButton.textContent=nextLabel;
-  message.style.display="flex";
-  running=false;
-}
-
-/* 26. رسیدن به پرچم */
-function reachFlag(){
-  if(flag.green) return;
-  flag.green=true;
-  score+=100;
-  updateHUD();
-  if(levelIndex<levelData.length-1){
-    gameState="levelcomplete";
-    showMessage("🚩 پرچم سبز شد!", "مرحله را با موفقیت تمام کردی! امتیاز: "+score,"مرحله بعد");
-  }else{
-    gameState="won";
-    showMessage("🏆 پیروزی!", "همهٔ مراحل را تمام کردی! امتیاز نهایی: "+score,"بازی دوباره");
-  }
-}
-
-/* 27. دکمه مرحله بعد */
-nextButton.addEventListener("click",()=>{
-  if(gameState==="levelcomplete"){
-    loadLevel(levelIndex+1);
-    message.style.display="none";
-    gameState="playing";
-    running=true;
-    lastTime=performance.now();
-  }else if(gameState==="won"||gameState==="lost"){
-    startGame();
-  }
-});
-
-/* 28. شروع دوباره و منو */
-document.getElementById("restartButton").addEventListener("click",startGame);
-document.getElementById("menuButton").addEventListener("click",()=>{
-  running=false;
-  gameState="menu";
-  message.style.display="none";
-  menu.style.display="flex";
-});
-addEventListener("contextmenu",e=>e.preventDefault());
-
-/* 29. فیزیک بازیکن */
-function updatePlayer(dt){
-  const step=Math.min(dt/16.67,2);
-  const speed=4.2;
-  player.vx=(keys.right?speed:0)-(keys.left?speed:0);
-  if(player.vx>0) player.face=1;
-  if(player.vx<0) player.face=-1;
-
-  if(jumpQueued&&player.onGround){
-    player.vy=-12.3;
-    player.onGround=false;
-  }
-  jumpQueued=false;
-
-  player.x+=player.vx*step;
-  player.x=Math.max(0,Math.min(worldWidth-player.w,player.x));
-  const oldBottom=player.y+player.h;
-  player.vy+=0.58*step;
-  player.vy=Math.min(player.vy,14);
-  player.y+=player.vy*step;
-  player.onGround=false;
-
-  // برخورد از بالا با زمین و سکو
-  for(const p of platforms){
-    const horizontal=player.x+player.w>p.x&&player.x<p.x+p.w;
-    const newBottom=player.y+player.h;
-    if(horizontal&&oldBottom<=p.y+3&&newBottom>=p.y&&player.vy>=0){
-      player.y=p.y-player.h;
-      player.vy=0;
-      player.onGround=true;
-    }
-  }
-
-  if(player.y>H+180){
-    loseLife();
-  }
-}
-
-/* 30. حرکت دشمن‌ها و برخورد */
-function updateEnemies(step){
-  for(const e of enemies){
-    if(!e.alive) continue;
-    e.x+=e.speed*e.dir*step;
-    if(e.x<e.start)e.dir=1;
-    if(e.x>e.start+e.range)e.dir=-1;
-    if(overlaps(player,e)){
-      // پرش روی دشمن، آن را از بازی خارج می‌کند
-      if(player.vy>1&&player.y+player.h-e.y<18){
-        e.alive=false;
-        player.vy=-8;
-        score+=25;
-      }else{
-        loseLife();
-        return;
-      }
-    }
-  }
-}
-
-/* 31. دوربین، هدف و حلقه اصلی */
-function updateGame(dt){
-  if(gameState!=="playing") return;
-  const step=Math.min(dt/16.67,2);
-  updatePlayer(dt);
-  if(gameState!=="playing") return;
-
-  updateEnemies(step);
-  if(gameState!=="playing") return;
-
-  if(player.x>checkpointX){
-    checkpointX=player.x;
-    missionText.textContent="نقطه ذخیره فعال شد";
-  }
-  if(player.x+player.w>=flag.x){
-    reachFlag();
-  }
-  cameraX=Math.max(0,Math.min(worldWidth-W,player.x-W*.35));
-}
-
-function render(){
-  drawBackground();
-  drawPlatforms();
-  drawFlag();
-  drawEnemies();
-  drawPlayer();
-}
-
-function loop(now){
-  const dt=Math.min(now-lastTime||16.67,34);
-  lastTime=now;
-  tick++;
-  if(running) updateGame(dt);
-  render();
-  requestAnimationFrame(loop);
-}
-
-/* 32. راه‌اندازی اولیه */
-loadLevel(0);
-render();
-lastTime=performance.now();
-requestAnimationFrame(loop);
-
-/* 33. سازگاری با بازگشت از پس‌زمینه */
-document.addEventListener("visibilitychange",()=>{
-  lastTime=performance.now();
-});
-
-/* 34. جلوگیری از گیرکردن کنترل‌ها */
-addEventListener("blur",()=>{
-  keys.left=false;
-  keys.right=false;
-});
-
-/* 35. پیام وضعیت شروع */
-console.log("WarFlag initialized successfully");
+<script>
+function background(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#75bce7');g.addColorStop(1,'#d9f0f7');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='#ffffff88';for(let i=0;i<5;i++){let x=((i*190-cameraX*.18)%(W+200)+W+200)%(W+200)-60,y=42+(i%3)*37;ctx.beginPath();ctx.ellipse(x,y,34,12,0,0,7);ctx.ellipse(x+22,y-5,23,15,0,0,7);ctx.ellipse(x+43,y,26,10,0,0,7);ctx.fill()}ctx.fillStyle='#80bb9c';ctx.beginPath();ctx.moveTo(0,groundY());for(let x=0;x<=W+10;x+=20)ctx.lineTo(x,groundY()-12-Math.sin((x+cameraX*.2)*.02)*13);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill()}
+function flag(x,color,lower=false){let sx=x-cameraX,gy=groundY();ctx.fillStyle='#f3f4f6';ctx.fillRect(sx,gy-92,5,92);ctx.fillStyle=color;if(lower)ctx.fillRect(sx+5,gy-28,44,16);else{ctx.beginPath();ctx.moveTo(sx+5,gy-90);ctx.lineTo(sx+53,gy-76);ctx.lineTo(sx+5,gy-61);ctx.closePath();ctx.fill()}}
+function draw(){background();const gy=groundY();ctx.fillStyle='#315a47';ctx.fillRect(0,gy,W,H-gy);ctx.fillStyle='#53ac5b';ctx.fillRect(0,gy,W,8);for(const p of platforms){let x=p.x-cameraX,y=gy-p.y;if(x+p.w<-10||x>W+10)continue;ctx.fillStyle='#8c6544';ctx.fillRect(x,y,p.w,p.h);ctx.fillStyle='#5ab95f';ctx.fillRect(x,y,p.w,6);ctx.fillStyle='#65432f';for(let bx=x+12;bx<x+p.w;bx+=30)ctx.fillRect(bx,y+12,12,4)}
+for(const en of enemies){if(!en.alive)continue;let x=en.x-cameraX,y=gy-en.h;ctx.fillStyle='#d94a45';ctx.fillRect(x,y+7,en.w,en.h-7);ctx.fillStyle='#fff4dd';ctx.fillRect(x+6,y+3,7,8);ctx.fillRect(x+20,y+3,7,8);ctx.fillStyle='#18243a';ctx.fillRect(x+8,y+6,4,4);ctx.fillRect(x+22,y+6,4,4);ctx.fillStyle='#4b2c29';ctx.fillRect(x+4,y+en.h-2,9,6);ctx.fillRect(x+21,y+en.h-2,9,6)}
+flag(redX,'#f0444e',redLowered);flag(greenX,'#32d477',state==='leveldone');const x=player.x-cameraX,y=player.y;ctx.fillStyle='#243b63';ctx.fillRect(x+5,y+28,9,15);ctx.fillRect(x+19,y+28,9,15);ctx.fillStyle='#32d477';ctx.fillRect(x+3,y+13,27,19);ctx.fillStyle='#f0c49b';ctx.fillRect(x+5,y,23,17);ctx.fillStyle='#17253b';ctx.fillRect(x+3,y-2,27,7);ctx.fillRect(x+7,y+8,20,5);ctx.fillStyle='#202e40';ctx.fillRect(x+(player.facing>0?16:5),y+7,12,5);ctx.fillStyle='#f4f7fa';ctx.fillRect(x+(player.facing>0?23:7),y+5,3,3);ctx.fillStyle='#102039';ctx.fillRect(x+7,y+43,10,3);ctx.fillRect(x+20,y+43,9,3)}
+function frame(ts){if(!lastTime)lastTime=ts;const dt=Math.min((ts-lastTime)/1000,.033);lastTime=ts;update(dt);draw();requestAnimationFrame(frame)}
+buildLevel();requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
