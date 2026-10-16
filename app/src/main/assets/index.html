@@ -51,7 +51,6 @@ h1{margin:0 0 10px;font-size:26px}
 </div>
 </div>
 </div>
-
 <script>
 (()=>{'use strict';
 const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
@@ -88,9 +87,6 @@ function update(dt){if(state!=='playing'){jumpQueued=false;return}elapsed+=dt;in
 for(const p of platforms){const py=gy-p.y;if(p.y>0&&player.x+player.w>p.x&&player.x<p.x+p.w&&player.vy>=0&&oldY+player.h<=py+8&&player.y+player.h>=py){player.y=py-player.h;player.vy=0;player.onGround=true}}
 for(const en of enemies){if(!en.alive)continue;en.x+=en.speed*en.dir*scale;if(en.x<en.min){en.x=en.min;en.dir=1}if(en.x+en.w>en.max){en.x=en.max-en.w;en.dir=-1}const er={x:en.x,y:gy-en.h,w:en.w,h:en.h};if(hit(player,er)){if(player.vy>1&&oldY+player.h<=er.y+12){en.alive=false;player.vy=-7}else loseLife()}}
 if(player.y>H+120)loseLife();if(player.x>redX&&!redLowered){redLowered=true;$('statusText').textContent='حالا به پرچم سبز برس!'}if(redLowered&&player.x>greenX){state='leveldone';$('statusText').textContent='مرحله کامل شد';nextBtn.classList.remove('hidden');startBtn.classList.add('hidden');show('مرحله کامل شد!','پرچم قرمز پایین آمد و پرچم سبز بالا رفت!','');nextBtn.textContent=levelIndex===levels.length-1?'پایان بازی':'مرحله بعد'}cameraX=Math.max(0,Math.min(length-W,player.x-W*.35))}
-</script>
-
-<script>
 function background(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#75bce7');g.addColorStop(1,'#d9f0f7');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='#ffffff88';for(let i=0;i<5;i++){let x=((i*190-cameraX*.18)%(W+200)+W+200)%(W+200)-60,y=42+(i%3)*37;ctx.beginPath();ctx.ellipse(x,y,34,12,0,0,7);ctx.ellipse(x+22,y-5,23,15,0,0,7);ctx.ellipse(x+43,y,26,10,0,0,7);ctx.fill()}ctx.fillStyle='#80bb9c';ctx.beginPath();ctx.moveTo(0,groundY());for(let x=0;x<=W+10;x+=20)ctx.lineTo(x,groundY()-12-Math.sin((x+cameraX*.2)*.02)*13);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill()}
 function flag(x,color,lower=false){let sx=x-cameraX,gy=groundY();ctx.fillStyle='#f3f4f6';ctx.fillRect(sx,gy-92,5,92);ctx.fillStyle=color;if(lower)ctx.fillRect(sx+5,gy-28,44,16);else{ctx.beginPath();ctx.moveTo(sx+5,gy-90);ctx.lineTo(sx+53,gy-76);ctx.lineTo(sx+5,gy-61);ctx.closePath();ctx.fill()}}
 function draw(){background();const gy=groundY();ctx.fillStyle='#315a47';ctx.fillRect(0,gy,W,H-gy);ctx.fillStyle='#53ac5b';ctx.fillRect(0,gy,W,8);for(const p of platforms){let x=p.x-cameraX,y=gy-p.y;if(x+p.w<-10||x>W+10)continue;ctx.fillStyle='#8c6544';ctx.fillRect(x,y,p.w,p.h);ctx.fillStyle='#5ab95f';ctx.fillRect(x,y,p.w,6);ctx.fillStyle='#65432f';for(let bx=x+12;bx<x+p.w;bx+=30)ctx.fillRect(bx,y+12,12,4)}
