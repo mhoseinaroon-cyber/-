@@ -1,5 +1,0 @@
-<adaptive-icon>
-    <background
-    android:resource="@android:color/transparent" />
-    <foreground android:src="@mipmap/ic_launcher" />
-</adaptive-icon>
