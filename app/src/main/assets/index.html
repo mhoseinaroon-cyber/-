@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ماموریت پرچم</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#82d5f5;font-family:sans-serif;touch-action:none}
+canvas{display:block;width:100vw;height:100vh}
+#menu{position:fixed;inset:0;background:#102039dd;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:5}
+h1{margin:0;color:#ffe56b}
+button{border:0;border-radius:12px;padding:13px 20px;font-size:18px;font-weight:bold;background:#32c66b;color:#102039}
+#controls{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
+.group{display:flex;gap:12px;pointer-events:auto}
+.ctrl{width:64px;height:60px;border-radius:16px;background:#102039bb;color:white;font-size:26px;touch-action:none}
+#hud{position:fixed;top:10px;left:10px;right:10px;color:white;font-weight:bold;text-shadow:1px 2px 3px #123;display:flex;justify-content:space-between;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="menu">
+<h1>🚩 مأموریت پرچم</h1>
+<p>از دشمن‌ها عبور کن و پرچم قرمز را سبز کن!</p>
+<button id="start">شروع بازی</button>
+</div>
+<div id="hud"><span>ماموریت پرچم</span><span id="status">مرحله ۱</span></div>
+<canvas id="game"></canvas>
+<div id="controls">
+<div class="group">
+<button class="ctrl" id="left">◀</button>
+<button class="ctrl" id="right">▶</button>
+</div>
+<div class="group">
+<button class="ctrl" id="jump">⬆</button>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const menu=document.getElementById('menu');
+const status=document.getElementById('status');
+let W=innerWidth,H=innerHeight,scale=1;
+function resize(){
+ W=innerWidth;H=innerHeight;
+ canvas.width=Math.floor(W*devicePixelRatio);
+ canvas.height=Math.floor(H*devicePixelRatio);
+ canvas.style.width=W+'px';canvas.style.height=H+'px';
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener('resize',resize);resize();
+const worldW=2200, groundY=H-85;
+let player, camera=0, won=false,started=false,frame=0;
+const keys={left:false,right:false};
+let platforms=[],enemies=[],flag={x:2080,green:false};
+function reset(){
+ player={x:55,y:groundY-48,w:30,h:48,vx:0,vy:0,onGround:false};
+ camera=0;won=false;frame=0;flag.green=false;
+ platforms=[
+ {x:0,y:groundY,w:470,h:100},
+ {x:530,y:groundY-45,w:160,h:20},
+ {x:730,y:groundY-95,w:160,h:20},
+ {x:930,y:groundY,w:380,h:100},
+ {x:1370,y:groundY-55,w:160,h:20},
+ {x:1570,y:groundY-100,w:160,h:20},
+ {x:1780,y:groundY,w:420,h:100}
+ ];
+ enemies=[
+ {x:300,y:groundY-28,min:220,max:420,v:1.4,w:28},
+ {x:1020,y:groundY-28,min:950,max:1250,v:1.8,w:28},
+ {x:1840,y:groundY-28,min:1800,max:1980,v:1.6,w:28}
+ ];
+}
+reset();
+function bind(id,key){
+ const el=document.getElementById(id);
+ const down=e=>{e.preventDefault();keys[key]=true};
+ const up=e=>{e.preventDefault();keys[key]=false};
+ el.addEventListener('pointerdown',down);
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,up));
+}
